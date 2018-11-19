@@ -9,6 +9,10 @@ module Main where
 
 -- IMPORTS --------------------------------------------------------------------
 
+import qualified Data.ByteString.Internal as B
+
+import qualified Parser as P
+
 import System.Console.CmdArgs as CA
   ( (&=)
   )
@@ -34,53 +38,30 @@ import qualified System.Console.CmdArgs as CA
   )
 
 
--- HELPERS --------------------------------------------------------------------
-
-data Result x e
-  = Ok  x
-  | Err e
-
-
 -- AST ------------------------------------------------------------------------
 
 data Ast
   = AstTodo
+  -- TODO: Implement Show
+  deriving
+    ( Show
+    )
 
 
 -- PARSER ---------------------------------------------------------------------
 
-data ParseError
-  = PETodo
-
-parseSliver :: String -> Result Sliver ParseError
-parseSliver
-  = do
-  putStrLn "TODO"
-
-runParser :: String -> IO ()
-runParser s
-  = do
-  putStrLn "TODO"
-  putStrLn s
+parseAst :: P.Parser Ast
+parseAst
+  = P.Parser
+  $ \state cok cerr eok eerr ->
+      AstTodo
 
   
-
 -- CLI ------------------------------------------------------------------------
-
--- data Method
---   = Debug
---   | Release
---   | Profile
---   deriving
---     ( CA.Data
---     , CA.Typeable
---     , Show
---     , Eq
---     )
 
 data CLI
     = Eval
-      { input :: String
+      { input :: B.ByteString
       }
     -- | Test
     --   { threads :: Int
@@ -98,12 +79,6 @@ data CLI
       , Eq
       )
 
--- threadsMsg x
---   = x
---     &= CA.help "Number of threads to use"
---     &= CA.name "j"
---     &= CA.typ "NUM"
-
 eval :: CLI
 eval
   = Eval
@@ -113,31 +88,7 @@ eval
         &= CA.args
     }
     &= CA.help "Evaluate a sliver."
-
--- test_ :: CLI
--- test_
---   = Test
---     { threads = threadsMsg CA.def
---     , extra   = CA.def &= CA.typ "ANY" &= CA.args
---     }
---     &= CA.help "Run the test suite"
--- 
--- build :: CLI
--- build
---   = Build
---     { threads
---       = threadsMsg CA.def
---     , method
---       = CA.enum
---         [ Release &= CA.help "Release build"
---         , Debug &= CA.help "Debug build"
---         , Profile &= CA.help "Profile build"
---         ]
---     , files
---       = CA.def &= CA.args
---     }
---     &= CA.help "Build the project"
---     &= CA.auto
+    &= CA.auto
 
 cli :: IO CLI
 cli
@@ -164,5 +115,6 @@ main :: IO ()
 main
   = do
   c <- cli
-  case c of
-    Eval str -> parseSliver str
+  putStrLn "TODO"
+  -- case c of
+  --   Eval src -> P.run parseAst src
