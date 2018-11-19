@@ -11,7 +11,7 @@ module Parser where
 
 import qualified Data.ByteString.Internal as B
 
-import Data.Text as Text
+import qualified Data.Text as Text
 
 import Foreign.ForeignPtr ( ForeignPtr, withForeignPtr ) 
 import GHC.Word (Word8)
@@ -104,6 +104,15 @@ data Next
   | Exposing
   deriving (Eq, Ord)
  
+noError :: ParseError
+noError
+  = ParseError 0 0
+  $ Theories [] []
+
+expect :: Int -> Int -> ContextStack -> Theory -> ParseError
+expect row col ctx theory
+  = ParseError row col
+  $ Theories ctx [theory]
 
 
 -- CONTEXT --------------------------------------------------------------------
@@ -180,44 +189,88 @@ newtype Parser a
     )
 
 run :: Parser a -> B.ByteString -> Either Error a
-run parser bytes =
-  runAt 1 1 parser bytes
+run parser bytes
+  = runAt 1 1 parser bytes
 
 runAt :: Int -> Int -> Parser a -> B.ByteString -> Either Error a
-runAt startRow startColumn (Parser parser) (B.PS fp offset length) =
-  case parser (State fp offset (offset + length) 0 startRow startColumn []) Ok Err Ok Err of
-    Ok value _ _ ->
-      Right value
+runAt startRow startColumn (Parser parser) (B.PS fp offset length)
+  = case parser (State fp offset (offset + length) 0 startRow startColumn []) Ok Err Ok Err of
 
-    Err (ParseError row col problem) ->
-      let
-        pos
-          = Position row col
-        mkError overallRegion subRegion
-          = Left $ Parse overallRegion subRegion problem
-      in
-        case problem of
+      Ok value _ _ ->
+        Right value
 
-          -- BadChar endCol ->
-          --   mkError (Region pos (Position row endCol)) Nothing
+      Err (ParseError row col problem) ->
+        let
+          pos
+            = Position row col
+          mkError overallRegion subRegion
+            = Left $ Parse overallRegion subRegion problem
+        in
+          case problem of
 
-          -- E.BadChar endCol ->
-          --   mkError (Region pos (R.Position row endCol)) Nothing
+            -- BadChar endCol ->
+            --   mkError (Region pos (Position row endCol)) Nothing
 
-          -- E.BadEscape width _ ->
-          --   mkError (Region pos (R.Position row (col + width))) Nothing
+            -- E.BadChar endCol ->
+            --   mkError (Region pos (R.Position row endCol)) Nothing
 
-          -- E.BadUnderscore badCol ->
-          --   mkError (Region pos (R.Position row badCol)) Nothing
+            -- E.BadEscape width _ ->
+            --   mkError (Region pos (R.Position row (col + width))) Nothing
 
-          -- E.BadOp _ ((_, start) : _) ->
-          --   mkError (Region start pos) (Just (Region pos pos))
+            -- E.BadUnderscore badCol ->
+            --   mkError (Region pos (R.Position row badCol)) Nothing
 
-          -- E.Theories ((_, start) : _) _ ->
-          --   mkError (Region start pos) (Just (Region pos pos))
+            -- E.BadOp _ ((_, start) : _) ->
+            --   mkError (Region start pos) (Just (Region pos pos))
 
-          _ ->
-            mkError (Region pos pos) Nothing
+            -- E.Theories ((_, start) : _) _ ->
+            --   mkError (Region start pos) (Just (Region pos pos))
+
+            _ ->
+              mkError (Region pos pos) Nothing
+
+
+-- STATE ----------------------------------------------------------------------
+
+getPosition :: Parser Position
+getPosition
+  = Parser
+  $ \state@(State _ _ _ _ row col _) _ _ eok _ ->
+      eok (Position row col) state noError
+
+getIndent :: Parser Int
+getIndent
+  = Parser
+  $ \state@(State _ _ _ indent _ _ _) _ _ eok _ ->
+      eok indent state noError
+
+
+getCol :: Parser Int
+getCol
+  = Parser
+  $ \state@(State _ _ _ _ _ col _) _ _ eok _ ->
+      eok col state noError
+
+
+pushContext :: Position -> Context -> Parser ()
+pushContext pos ctx
+  = Parser
+  $ \state@(State _ _ _ _ _ _ context) _ _ eok _ ->
+      eok () (state { context = (ctx, pos) : context }) noError
+
+
+popContext :: a -> Parser a
+popContext value
+  = Parser
+  $ \state@(State _ _ _ _ _ _ context) _ _ eok _ ->
+      eok value (state { context = tail context }) noError
+
+
+setIndent :: Int -> Parser ()
+setIndent indent
+  = Parser
+  $ \state _ _ eok _ ->
+      eok () (state { indent = indent }) noError
 
 
 -- STATE ----------------------------------------------------------------------

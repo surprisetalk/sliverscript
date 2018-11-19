@@ -9,33 +9,13 @@ module Main where
 
 -- IMPORTS --------------------------------------------------------------------
 
-import qualified Data.ByteString.Internal as B
+import qualified Data.ByteString as B
 
 import qualified Parser as P
 
-import System.Console.CmdArgs as CA
-  ( (&=)
-  )
+import qualified Options.Applicative as OP
+import Data.Semigroup ((<>))
 
-import qualified System.Console.CmdArgs as CA
-  ( Data
-  , Typeable
-  , def
-  , cmdArgs
-  , cmdArgsRun
-  , cmdArgsMode
-  , modes
-  , name
-  , def
-  , auto
-  , args
-  , enum
-  , typ
-  , help
-  , opt
-  , program
-  , summary
-  )
 
 
 -- AST ------------------------------------------------------------------------
@@ -50,71 +30,112 @@ data Ast
 
 -- PARSER ---------------------------------------------------------------------
 
-parseAst :: P.Parser Ast
+-- parseAst :: P.Parser Ast
 parseAst
-  = P.Parser
-  $ \state cok cerr eok eerr ->
-      AstTodo
+  = P.getCol
+
+
+-- EVAL -----------------------------------------------------------------------
+
+eval :: IO B.ByteString -> IO ()
+eval io
+  = do
+  input <- io
+  case P.run parseAst input of
+
+      Left _ ->
+        putStrLn "TODO: Error"
+
+      Right _ ->
+        putStrLn "TODO: AST"
+
 
   
 -- CLI ------------------------------------------------------------------------
 
-data CLI
-    = Eval
-      { input :: B.ByteString
-      }
-    -- | Test
-    --   { threads :: Int
-    --   , extra :: [String]
-    --   }
-    -- | Build
-    --   { threads :: Int
-    --   , method :: Method
-    --   , files :: [FilePath]
-    --   }
-    deriving
-      ( CA.Data
-      , CA.Typeable
-      , Show
-      , Eq
-      )
+--     -- [ eval
+--     -- , check
+--     -- , config
+--     -- , binList
+--     -- , binAdd
+--     -- , binRemove
+--     -- , publish
+--     -- , compile
+--     ]
 
-eval :: CLI
-eval
-  = Eval
-    { input
-      = CA.def
-        &= CA.typ "SLIVER"
-        &= CA.args
-    }
-    &= CA.help "Evaluate a sliver."
-    &= CA.auto
+fileInput :: OP.Parser (IO B.ByteString)
+fileInput
+  = B.readFile
+    <$> OP.argument OP.str (OP.metavar "FILENAME")
 
-cli :: IO CLI
+
+stdInput :: OP.Parser (IO B.ByteString)
+stdInput
+  = B.getContents
+    <$ OP.flag' ()
+       (  OP.long "stdin"
+       <> OP.help "Read from stdin"
+       )
+
+-- input :: OP.Parser (IO B.ByteString)
+-- input
+--   = fileInput
+--   <> stdInput
+
+cli :: OP.Parser (IO ())
 cli
-  = CA.cmdArgsRun
-  $ CA.cmdArgsMode
-  $ CA.modes
-    [ eval
-    -- , check
-    -- , config
-    -- , binList
-    -- , binAdd
-    -- , binRemove
-    -- , publish
-    -- , compile
-    ]
-    &= CA.help "TODO"
-    &= CA.program "sliverscript"
-    &= CA.summary "TODO"
+  = OP.subparser
+  ( OP.command "eval"
+    ( OP.info ( eval <$> fileInput )
+      ( OP.progDesc "Evaluate a sliver." )
+    )
+ -- <> OP.command "commit"
+ --    ( OP.info commitOptions
+ --      ( OP.progDesc "Record changes to the repository"
+ --      )
+ --    )
+  )
 
+-- digestCLIInput :: (? -> IO ()) -> Input -> IO ()
+-- digestCLIInput
+--   = 
+
+-- data Sample
+--   = Sample
+--     { hello      :: String
+--     , quiet      :: Bool
+--     , enthusiasm :: Int
+--     }
+
+-- sample :: OP.Parser Sample
+-- sample = Sample
+--       <$> OP.strOption
+--           ( OP.long "hello"
+--          <> OP.metavar "TARGET"
+--          <> OP.help "Target for the greeting" )
+--       <*> OP.switch
+--           ( OP.long "quiet"
+--          <> OP.short 'q'
+--          <> OP.help "Whether to be quiet" )
+--       <*> OP.option OP.auto
+--           ( OP.long "enthusiasm"
+--          <> OP.help "How enthusiastically to greet"
+--          <> OP.showDefault
+--          <> OP.value 1
+--          <> OP.metavar "INT" )
+
+execCli :: IO ()
+execCli = id =<< OP.execParser opts
+  where
+    opts
+      = OP.info (cli OP.<**> OP.helper)
+        ( OP.fullDesc
+          <> OP.progDesc "Print a greeting for TARGET"
+          <> OP.header "hello - a test for optparse-applicative"
+        )
 
 -- MAIN -----------------------------------------------------------------------
 
 main :: IO ()
-main
-  = do
-  c <- cli
-  putStrLn "TODO"
-  -- case c of
-  --   Eval src -> P.run parseAst src
+main = execCli
+
