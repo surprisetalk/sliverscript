@@ -34,15 +34,35 @@ import qualified System.Console.CmdArgs as CA
   )
 
 
+-- HELPERS --------------------------------------------------------------------
+
+data Result x e
+  = Ok  x
+  | Err e
+
+
+-- AST ------------------------------------------------------------------------
+
+data Ast
+  = AstTodo
+
+
 -- PARSER ---------------------------------------------------------------------
 
--- TODO
+data ParseError
+  = PETodo
 
-parseSliver :: String -> IO ()
-parseSliver s
+parseSliver :: String -> Result Sliver ParseError
+parseSliver
   = do
-  putStrLn "PARSING..."
+  putStrLn "TODO"
+
+runParser :: String -> IO ()
+runParser s
+  = do
+  putStrLn "TODO"
   putStrLn s
+
   
 
 -- CLI ------------------------------------------------------------------------
