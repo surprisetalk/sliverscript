@@ -14,25 +14,9 @@ import qualified Data.ByteString as B
 import qualified Parser as P
 
 import qualified Options.Applicative as OP
+
+import Control.Applicative ((<|>))
 import Data.Semigroup ((<>))
-
-
-
--- AST ------------------------------------------------------------------------
-
-data Ast
-  = AstTodo
-  -- TODO: Implement Show
-  deriving
-    ( Show
-    )
-
-
--- PARSER ---------------------------------------------------------------------
-
--- parseAst :: P.Parser Ast
-parseAst
-  = P.getCol
 
 
 -- EVAL -----------------------------------------------------------------------
@@ -41,7 +25,7 @@ eval :: IO B.ByteString -> IO ()
 eval io
   = do
   input <- io
-  case P.run parseAst input of
+  case P.run P.slv input of
 
       Left _ ->
         putStrLn "TODO: Error"
@@ -77,10 +61,10 @@ stdInput
        <> OP.help "Read from stdin"
        )
 
--- input :: OP.Parser (IO B.ByteString)
--- input
---   = fileInput
---   <> stdInput
+input :: OP.Parser (IO B.ByteString)
+input
+  = fileInput
+ <|> stdInput
 
 cli :: OP.Parser (IO ())
 cli
@@ -95,17 +79,6 @@ cli
  --      )
  --    )
   )
-
--- digestCLIInput :: (? -> IO ()) -> Input -> IO ()
--- digestCLIInput
---   = 
-
--- data Sample
---   = Sample
---     { hello      :: String
---     , quiet      :: Bool
---     , enthusiasm :: Int
---     }
 
 -- sample :: OP.Parser Sample
 -- sample = Sample
