@@ -18,32 +18,131 @@ import qualified System.Console.CmdArgs as CA
   , Typeable
   , def
   , cmdArgs
+  , cmdArgsRun
+  , cmdArgsMode
+  , modes
+  , name
+  , def
+  , auto
+  , args
+  , enum
+  , typ
   , help
   , opt
+  , program
   , summary
   )
 
+
+-- PARSER ---------------------------------------------------------------------
+
+-- TODO
+
+parseSliver :: String -> IO ()
+parseSliver s
+  = do
+  putStrLn "PARSING..."
+  putStrLn s
   
+
 -- CLI ------------------------------------------------------------------------
 
-data Sample =
-  Sample
-  { hello :: String
-  } deriving
-  ( Show
-  , CA.Data
-  , CA.Typeable
-  )
+-- data Method
+--   = Debug
+--   | Release
+--   | Profile
+--   deriving
+--     ( CA.Data
+--     , CA.Typeable
+--     , Show
+--     , Eq
+--     )
 
-sample =
-  Sample
-  { hello = CA.def &= CA.help "World argument" &= CA.opt "world"
-  } &= CA.summary "Sample v1"
+data CLI
+    = Eval
+      { input :: String
+      }
+    -- | Test
+    --   { threads :: Int
+    --   , extra :: [String]
+    --   }
+    -- | Build
+    --   { threads :: Int
+    --   , method :: Method
+    --   , files :: [FilePath]
+    --   }
+    deriving
+      ( CA.Data
+      , CA.Typeable
+      , Show
+      , Eq
+      )
+
+-- threadsMsg x
+--   = x
+--     &= CA.help "Number of threads to use"
+--     &= CA.name "j"
+--     &= CA.typ "NUM"
+
+eval :: CLI
+eval
+  = Eval
+    { input
+      = CA.def
+        &= CA.typ "SLIVER"
+        &= CA.args
+    }
+    &= CA.help "Evaluate a sliver."
+
+-- test_ :: CLI
+-- test_
+--   = Test
+--     { threads = threadsMsg CA.def
+--     , extra   = CA.def &= CA.typ "ANY" &= CA.args
+--     }
+--     &= CA.help "Run the test suite"
+-- 
+-- build :: CLI
+-- build
+--   = Build
+--     { threads
+--       = threadsMsg CA.def
+--     , method
+--       = CA.enum
+--         [ Release &= CA.help "Release build"
+--         , Debug &= CA.help "Debug build"
+--         , Profile &= CA.help "Profile build"
+--         ]
+--     , files
+--       = CA.def &= CA.args
+--     }
+--     &= CA.help "Build the project"
+--     &= CA.auto
+
+cli :: IO CLI
+cli
+  = CA.cmdArgsRun
+  $ CA.cmdArgsMode
+  $ CA.modes
+    [ eval
+    -- , check
+    -- , config
+    -- , binList
+    -- , binAdd
+    -- , binRemove
+    -- , publish
+    -- , compile
+    ]
+    &= CA.help "TODO"
+    &= CA.program "sliverscript"
+    &= CA.summary "TODO"
 
 
 -- MAIN -----------------------------------------------------------------------
 
 main :: IO ()
-main = do
-  putStrLn "TEST"
-  print =<< CA.cmdArgs sample
+main
+  = do
+  c <- cli
+  case c of
+    Eval str -> parseSliver str
