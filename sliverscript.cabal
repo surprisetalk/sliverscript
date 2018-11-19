@@ -4,7 +4,7 @@ version:             0.1.0.0
 -- description:
 homepage:            https://github.com/githubuser/sliverscript
 license:             BSD3
-license-file:        LICENSE
+-- license-file:        LICENSE
 author:              Alan Tay
 -- maintainer:          example@example.com
 copyright:           2018 Alan Tay
