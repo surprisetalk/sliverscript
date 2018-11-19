@@ -1,6 +1,13 @@
+
 {-# LANGUAGE DeriveDataTypeable #-}
 
+
+-- MODULE ---------------------------------------------------------------------
+
 module Main where
+
+
+-- IMPORTS --------------------------------------------------------------------
 
 import System.Console.CmdArgs as CA
   ( (&=)
@@ -16,6 +23,9 @@ import qualified System.Console.CmdArgs as CA
   , summary
   )
 
+  
+-- CLI ------------------------------------------------------------------------
+
 data Sample =
   Sample
   { hello :: String
@@ -29,6 +39,9 @@ sample =
   Sample
   { hello = CA.def &= CA.help "World argument" &= CA.opt "world"
   } &= CA.summary "Sample v1"
+
+
+-- MAIN -----------------------------------------------------------------------
 
 main :: IO ()
 main = do
