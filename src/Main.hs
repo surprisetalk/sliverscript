@@ -25,7 +25,7 @@ eval :: IO B.ByteString -> IO ()
 eval io
   = do
   input <- io
-  case P.run P.slv input of
+  case P.run input of
 
       Left _ ->
         putStrLn "TODO: Error"
